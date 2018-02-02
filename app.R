@@ -25,7 +25,7 @@ ui <- fluidPage(
   </tr>
 </table>')
       ),
-      column(2, actionButton("convert", "Convert")),
+      column(2, checkboxInput("prefix", "Prefix"), actionButton("convert", "Convert")),
       column(5, tags$pre(textOutput("rCode")))
       ),
    fluidRow(tags$a(href = "https://github.com/alandipert/html2r", "Github"))
@@ -42,17 +42,17 @@ makeAttrs <- function(node) {
 
 Keep <- function(fun, xs) Map(fun, xs) %>% Filter(Negate(is.null), .)
 
-renderNode <- function(node, indent = 0) {
+renderNode <- function(node, indent = 0, prefix = FALSE) {
    if (xmlName(node) == "text") {
       txt <- xmlValue(node)
       if (nchar(trimws(txt)) > 0) {
          paste0('"', trimws(txt), '"')
       }
    } else {
-      tagName <- xmlName(node)
+      tagName <- if (prefix) paste0("tags$", xmlName(node)) else xmlName(node)
       newIndent <- indent + length(tagName) + 1
       xmlChildren(node) %>%
-         Keep(partial(renderNode, indent = newIndent), .) %>%
+         Keep(partial(renderNode, indent = newIndent, prefix = prefix), .) %>%
          append(makeAttrs(node), .) %>%
          paste(collapse = str_pad(",\n", width = newIndent, side = c("right"))) %>%
          trimws(which = c("left")) %>%
@@ -60,19 +60,20 @@ renderNode <- function(node, indent = 0) {
    }
 }
 
-html2R <- function(htmlStr) {
+html2R <- function(htmlStr, prefix = FALSE) {
    htmlStr %>%
       htmlParse %>%
       getNodeSet("/html/body/*") %>%
       `[[`(1) %>%
-      renderNode
+      renderNode(prefix = prefix)
 }
 
 server <- function(input, output, session) {
    
    rcode <- eventReactive(input$convert, {
-      html2R(input$html)
+      html2R(input$html, prefix = input$prefix)
    }, ignoreInit = TRUE)
+   
    output$rCode <- renderText(rcode())
 }
 

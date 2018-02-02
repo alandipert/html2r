@@ -8,22 +8,22 @@ ui <- fluidPage(
    titlePanel("HTML to R Converter"),
    fluidRow(
       column(5, textAreaInput("html", "HTML", rows=20, value = ' <table style="width:100%">
-                              <tr>
-                              <th>Firstname</th>
-                              <th>Lastname</th>
-                              <th>Age</th>
-                              </tr>
-                              <tr>
-                              <td>Jill</td>
-                              <td>Smith</td>
-                              <td>50</td>
-                              </tr>
-                              <tr>
-                              <td>Eve</td>
-                              <td>Jackson</td>
-                              <td>94</td>
-                              </tr>
-                              </table>')
+  <tr>
+    <th>Firstname</th>
+    <th>Lastname</th>
+    <th>Age</th>
+  </tr>
+  <tr>
+    <td>Jill</td>
+    <td>Smith</td>
+    <td>50</td>
+  </tr>
+  <tr>
+    <td>Eve</td>
+    <td>Jackson</td>
+    <td>94</td>
+  </tr>
+</table>')
       ),
       column(2, actionButton("convert", "Convert")),
       column(5, tags$pre(textOutput("rCode")))
@@ -69,11 +69,11 @@ html2R <- function(htmlStr) {
 }
 
 server <- function(input, output, session) {
-   observeEvent(input$convert, {
-      output$rCode <- renderText({
-         html2R(input$html)
-      })
-   })
+   
+   rcode <- eventReactive(input$convert, {
+      html2R(input$html)
+   }, ignoreInit = TRUE)
+   output$rCode <- renderText(rcode())
 }
 
 shinyApp(ui, server)
